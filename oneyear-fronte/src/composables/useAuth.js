@@ -1,0 +1,68 @@
+import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
+import { loginUser, registerUser } from '../api/auth';
+
+export function useAuth({ onLoginSuccess, showMessage }) {
+  const store = useStore();
+  const router = useRouter();
+
+  const token = ref(store.state.auth.token || '');
+  const user = ref(store.state.auth.user || null);
+
+  const loginForm = reactive({ email: '', password: '' });
+  const registerForm = reactive({ username: '', email: '', password: '' });
+
+  const isLoggedIn = computed(() => store.getters['auth/isLoggedIn']);
+
+  async function register() {
+    try {
+      await registerUser(registerForm);
+      showMessage('注册成功，请登录');
+      registerForm.username = '';
+      registerForm.email = '';
+      registerForm.password = '';
+    } catch (err) {
+      showMessage(err?.response?.data?.message || '注册失败');
+    }
+  }
+
+  async function login() {
+    try {
+      const { data } = await loginUser(loginForm);
+      token.value = data.token;
+      user.value = data.user;
+      await store.dispatch('auth/setAuth', {
+        token: data.token,
+        user: data.user
+      });
+      if (typeof onLoginSuccess === 'function') {
+        await onLoginSuccess(data.user);
+      }
+      await router.push('/home');
+    } catch (err) {
+      showMessage(err?.response?.data?.message || '登录失败');
+    }
+  }
+
+  async function logout(onLogout) {
+    token.value = '';
+    user.value = null;
+    await store.dispatch('auth/clearAuth');
+    if (typeof onLogout === 'function') {
+      onLogout();
+    }
+    await router.push('/auth');
+  }
+
+  return {
+    token,
+    user,
+    loginForm,
+    registerForm,
+    isLoggedIn,
+    register,
+    login,
+    logout
+  };
+}
