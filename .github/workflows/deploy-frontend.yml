@@ -84,6 +84,7 @@ jobs:
         if: steps.guard.outputs.ready == 'true'
         run: |
           rsync -az --delete \
+            --exclude '.user.ini' \
             -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT -o StrictHostKeyChecking=yes" \
             oneyear-fronte/dist/ \
             "$SERVER_USER@$SERVER_HOST:$FRONTEND_DEPLOY_PATH/"
