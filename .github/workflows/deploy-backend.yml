@@ -1,0 +1,43 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'oneyear-back/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync backend source
+        run: |
+          rsync -az --delete \
+            --exclude '.env' \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            oneyear-back/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.BACKEND_DEPLOY_PATH }}/"
+
+      - name: Install prod deps and restart PM2
+        run: |
+          ssh -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" << 'EOF'
+            set -e
+            cd "${{ secrets.BACKEND_DEPLOY_PATH }}"
+            npm install --omit=dev
+            pm2 restart "${{ secrets.BACKEND_PM2_APP }}" || pm2 start src/server.js --name "${{ secrets.BACKEND_PM2_APP }}"
+          EOF

@@ -71,3 +71,63 @@ pm2 restart oneyear-back  # 重启后端
 pm2 logs oneyear-back     # 查看后端日志
 pm2 stop oneyear-back     # 停止后端
 ```
+
+---
+
+## GitHub Actions 自动发布（推荐）
+
+已支持：
+
+1. 推送 `main` 且修改 `oneyear-fronte/` 时，自动构建并发布前端
+2. 推送 `main` 且修改 `oneyear-back/` 时，自动同步后端并重启 PM2
+
+工作流文件：
+
+1. `.github/workflows/deploy-frontend.yml`
+2. `.github/workflows/deploy-backend.yml`
+
+### 1) 在 GitHub 仓库配置 Secrets
+
+进入：`Settings -> Secrets and variables -> Actions -> New repository secret`
+
+必填项：
+
+1. `SERVER_HOST`：服务器 IP（例如 `43.129.171.53`）
+2. `SERVER_PORT`：SSH 端口（通常 `22`）
+3. `SERVER_USER`：SSH 用户（例如 `root` 或部署用户）
+4. `SERVER_SSH_KEY`：私钥内容（建议专用 deploy key）
+5. `FRONTEND_DEPLOY_PATH`：前端目录（`/www/wwwroot/oneyear-front`）
+6. `BACKEND_DEPLOY_PATH`：后端目录（`/www/wwwroot/oneyear-back`）
+7. `BACKEND_PM2_APP`：PM2 进程名（`oneyear-back`）
+
+### 2) 服务器首次准备
+
+确保服务器可用：
+
+```bash
+node -v
+npm -v
+pm2 -v
+rsync --version
+```
+
+如果缺少 PM2：
+
+```bash
+npm i -g pm2
+```
+
+首次启动后端（仅第一次需要）：
+
+```bash
+cd /www/wwwroot/oneyear-back
+npm install --omit=dev
+pm2 start src/server.js --name oneyear-back
+pm2 save
+```
+
+### 3) 触发自动发布
+
+1. 提交并推送到 `main`
+2. 进入 GitHub `Actions` 页面查看发布日志
+3. 后端可在服务器用 `pm2 logs oneyear-back` 验证
