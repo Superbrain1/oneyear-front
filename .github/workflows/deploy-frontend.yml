@@ -11,10 +11,26 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      FRONTEND_DEPLOY_PATH: ${{ secrets.FRONTEND_DEPLOY_PATH }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          set -e
+          for v in SERVER_HOST SERVER_PORT SERVER_USER SERVER_SSH_KEY FRONTEND_DEPLOY_PATH; do
+            if [ -z "${!v}" ]; then
+              echo "Missing secret: $v"
+              exit 1
+            fi
+          done
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,14 +49,21 @@ jobs:
 
       - name: Setup SSH key
         run: |
+          set -e
           mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          printf "%s" "$SERVER_SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H -p "$SERVER_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$SERVER_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$SERVER_USER@$SERVER_HOST" "echo ssh-ok"
 
       - name: Upload dist to server
         run: |
           rsync -az --delete \
-            -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT -o StrictHostKeyChecking=yes" \
             oneyear-fronte/dist/ \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.FRONTEND_DEPLOY_PATH }}/"
+            "$SERVER_USER@$SERVER_HOST:$FRONTEND_DEPLOY_PATH/"

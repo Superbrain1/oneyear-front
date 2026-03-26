@@ -11,17 +11,41 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      BACKEND_DEPLOY_PATH: ${{ secrets.BACKEND_DEPLOY_PATH }}
+      BACKEND_PM2_APP: ${{ secrets.BACKEND_PM2_APP }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate required secrets
+        run: |
+          set -e
+          for v in SERVER_HOST SERVER_PORT SERVER_USER SERVER_SSH_KEY BACKEND_DEPLOY_PATH BACKEND_PM2_APP; do
+            if [ -z "${!v}" ]; then
+              echo "Missing secret: $v"
+              exit 1
+            fi
+          done
+
       - name: Setup SSH key
         run: |
+          set -e
           mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          printf "%s" "$SERVER_SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H -p "$SERVER_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$SERVER_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$SERVER_USER@$SERVER_HOST" "echo ssh-ok"
 
       - name: Sync backend source
         run: |
@@ -29,15 +53,15 @@ jobs:
             --exclude '.env' \
             --exclude 'node_modules' \
             --exclude '.git' \
-            -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT -o StrictHostKeyChecking=yes" \
             oneyear-back/ \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.BACKEND_DEPLOY_PATH }}/"
+            "$SERVER_USER@$SERVER_HOST:$BACKEND_DEPLOY_PATH/"
 
       - name: Install prod deps and restart PM2
         run: |
-          ssh -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" << 'EOF'
+          ssh -i ~/.ssh/id_ed25519 -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" << EOF
             set -e
-            cd "${{ secrets.BACKEND_DEPLOY_PATH }}"
+            cd "$BACKEND_DEPLOY_PATH"
             npm install --omit=dev
-            pm2 restart "${{ secrets.BACKEND_PM2_APP }}" || pm2 start src/server.js --name "${{ secrets.BACKEND_PM2_APP }}"
+            pm2 restart "$BACKEND_PM2_APP" || pm2 start src/server.js --name "$BACKEND_PM2_APP"
           EOF
