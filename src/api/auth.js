@@ -7,3 +7,7 @@ export function registerUser(payload) {
 export function loginUser(payload) {
   return api.post('/auth/login', payload);
 }
+
+export function googleAuth(payload) {
+  return api.post('/auth/google', payload);
+}

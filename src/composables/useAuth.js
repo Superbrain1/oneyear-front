@@ -1,9 +1,9 @@
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import { loginUser, registerUser } from '../api/auth';
+import { googleAuth, loginUser, registerUser } from '../api/auth';
 
-export function useAuth({ onLoginSuccess, showMessage }) {
+export function useAuth({ onLoginSuccess, onRegisterSuccess, showMessage }) {
   const store = useStore();
   const router = useRouter();
 
@@ -22,6 +22,9 @@ export function useAuth({ onLoginSuccess, showMessage }) {
       registerForm.username = '';
       registerForm.email = '';
       registerForm.password = '';
+      if (typeof onRegisterSuccess === 'function') {
+        await onRegisterSuccess();
+      }
     } catch (err) {
       showMessage(err?.response?.data?.message || '注册失败');
     }
@@ -55,6 +58,22 @@ export function useAuth({ onLoginSuccess, showMessage }) {
     await router.push('/auth');
   }
 
+  async function loginWithGoogle(credential) {
+    try {
+      const { data } = await googleAuth({ credential });
+      token.value = data.token;
+      user.value = data.user;
+      await store.dispatch('auth/setAuth', {
+        token: data.token,
+        user: data.user
+      });
+      showMessage(data?.isNewUser ? '注册成功，已为你自动登录' : 'Google 登录成功');
+      await router.push('/home');
+    } catch (err) {
+      showMessage(err?.response?.data?.message || 'Google 登录失败');
+    }
+  }
+
   return {
     token,
     user,
@@ -63,6 +82,7 @@ export function useAuth({ onLoginSuccess, showMessage }) {
     isLoggedIn,
     register,
     login,
+    loginWithGoogle,
     logout
   };
 }

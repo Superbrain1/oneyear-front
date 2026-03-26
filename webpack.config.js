@@ -66,6 +66,9 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.VUE_APP_API_BASE': JSON.stringify(
         process.env.VUE_APP_API_BASE || ''
+      ),
+      'process.env.VUE_APP_GOOGLE_CLIENT_ID': JSON.stringify(
+        process.env.VUE_APP_GOOGLE_CLIENT_ID || ''
       )
     }),
 
