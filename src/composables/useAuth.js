@@ -10,7 +10,7 @@ export function useAuth({ onLoginSuccess, onRegisterSuccess, showMessage }) {
   const token = ref(store.state.auth.token || '');
   const user = ref(store.state.auth.user || null);
 
-  const loginForm = reactive({ email: '', password: '' });
+  const loginForm = reactive({ account: '', password: '' });
   const registerForm = reactive({ username: '', email: '', password: '' });
 
   const isLoggedIn = computed(() => store.getters['auth/isLoggedIn']);

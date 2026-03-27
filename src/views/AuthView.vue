@@ -42,7 +42,7 @@
         </div>
 
         <section v-if="activeTab === 'login'" class="auth-panel" role="tabpanel" aria-label="登录面板">
-          <input v-model="loginForm.email" placeholder="邮箱" />
+          <input v-model="loginForm.account" placeholder="用户名或邮箱" />
           <input v-model="loginForm.password" type="password" placeholder="密码" />
           <button @click="login">登录</button>
         </section>
@@ -58,7 +58,16 @@
           <p class="muted" style="margin-bottom:8px">
             {{ activeTab === 'login' ? '或使用 Google 登录' : '或使用 Google 注册' }}
           </p>
-          <div ref="googleBtn"></div>
+          <div v-show="googleReady" ref="googleBtn"></div>
+          <button
+            v-if="!googleReady"
+            type="button"
+            class="google-manual-btn"
+            @click="retryInitGoogle"
+          >
+            重新加载 Google 登录
+          </button>
+          <p v-if="googleHint" class="muted" style="margin-top:8px">{{ googleHint }}</p>
         </div>
 
         <p v-if="message" class="auth-toast">{{ message }}</p>
@@ -78,6 +87,8 @@ export default {
     const { message, showMessage } = useMessage();
     const activeTab = ref('login');
     const googleBtn = ref(null);
+    const googleReady = ref(false);
+    const googleHint = ref('');
     const googleClientId = process.env.VUE_APP_GOOGLE_CLIENT_ID || '';
 
     const { loginForm, registerForm, register, login, loginWithGoogle } = useAuth({
@@ -131,6 +142,8 @@ export default {
 
     async function initGoogle() {
       if (!googleClientId) {
+        googleReady.value = false;
+        googleHint.value = 'Google 登录暂不可用，请稍后重试';
         return;
       }
 
@@ -147,9 +160,17 @@ export default {
           }
         });
         renderGoogleButton();
+        googleReady.value = true;
+        googleHint.value = '';
       } catch (err) {
+        googleReady.value = false;
+        googleHint.value = 'Google SDK 加载失败，请检查网络后重试';
         showMessage(err?.message || 'Google 登录初始化失败');
       }
+    }
+
+    async function retryInitGoogle() {
+      await initGoogle();
     }
 
     onMounted(() => {
@@ -163,10 +184,13 @@ export default {
     return {
       activeTab,
       googleBtn,
+      googleReady,
+      googleHint,
       loginForm,
       registerForm,
       register,
       login,
+      retryInitGoogle,
       message
     };
   }
@@ -227,6 +251,12 @@ export default {
 
 .google-wrap {
   margin-top: 16px;
+}
+
+.google-manual-btn {
+  margin-top: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .auth-toast {
