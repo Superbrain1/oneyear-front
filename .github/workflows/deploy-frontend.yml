@@ -4,7 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'oneyear-fronte/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'webpack.config.js'
+      - 'styles.css'
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
@@ -45,16 +50,17 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'oneyear-fronte/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
         if: steps.guard.outputs.ready == 'true'
-        working-directory: oneyear-fronte
         run: npm ci
 
       - name: Build frontend
         if: steps.guard.outputs.ready == 'true'
-        working-directory: oneyear-fronte
+        env:
+          VUE_APP_API_BASE: /api
+          VUE_APP_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: npm run build
 
       - name: Setup SSH key
@@ -86,7 +92,7 @@ jobs:
           rsync -az --delete \
             --exclude '.user.ini' \
             -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT -o StrictHostKeyChecking=yes" \
-            oneyear-fronte/dist/ \
+            dist/ \
             "$SERVER_USER@$SERVER_HOST:$FRONTEND_DEPLOY_PATH/"
 
       - name: Skip notice
