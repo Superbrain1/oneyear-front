@@ -63,6 +63,12 @@ jobs:
           VUE_APP_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: npm run build
 
+      - name: Verify build output
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          test -f dist/index.html
+          test -s dist/index.html
+
       - name: Setup SSH key
         if: steps.guard.outputs.ready == 'true'
         run: |
@@ -94,6 +100,17 @@ jobs:
             -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT -o StrictHostKeyChecking=yes" \
             dist/ \
             "$SERVER_USER@$SERVER_HOST:$FRONTEND_DEPLOY_PATH/"
+
+      - name: Verify remote frontend directory
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" << EOF
+            set -e
+            test -f "$FRONTEND_DEPLOY_PATH/index.html"
+            find "$FRONTEND_DEPLOY_PATH" -type d -exec chmod 755 {} +
+            find "$FRONTEND_DEPLOY_PATH" -type f -exec chmod 644 {} +
+            ls -lah "$FRONTEND_DEPLOY_PATH/index.html"
+          EOF
 
       - name: Skip notice
         if: steps.guard.outputs.ready != 'true'
