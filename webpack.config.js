@@ -1,7 +1,5 @@
 const path = require('path');
 const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const CopyPlugin = require('copy-webpack-plugin');
 
@@ -14,7 +12,7 @@ module.exports = {
 
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: isDev ? 'js/[name].js' : 'js/[name].[contenthash:8].js',
+    filename: 'js/[name].js',
     assetModuleFilename: 'assets/[hash:8][ext]',
     clean: true,
     publicPath: '/'
@@ -46,10 +44,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: [
-          isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
-          'css-loader'
-        ]
+        use: ['style-loader', 'css-loader']
       },
       {
         test: /\.(png|jpe?g|gif|svg|webp)$/,
@@ -74,11 +69,6 @@ module.exports = {
 
     new VueLoaderPlugin(),
 
-    new HtmlWebpackPlugin({
-      template: './public/index.html',
-      title: 'OneYear 泡泡论坛'
-    }),
-
     new CopyPlugin({
       patterns: [
         {
@@ -87,18 +77,11 @@ module.exports = {
           globOptions: { ignore: ['**/index.html'] }
         }
       ]
-    }),
-
-    ...(isDev
-      ? []
-      : [
-          new MiniCssExtractPlugin({
-            filename: 'css/[name].[contenthash:8].css'
-          })
-        ])
+    })
   ],
 
   devServer: {
+    host: '127.0.0.1',
     port: 5173,
     hot: true,
     open: true,

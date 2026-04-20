@@ -15,8 +15,9 @@
 
     <div class="page auth-content">
       <div class="auth">
-        <h1>OneYear</h1>
-        <p class="muted">前端与后端已分离，登录后进入泡泡首页。</p>
+        <p class="auth-kicker">City Badminton Network</p>
+        <h1>OneYear 羽毛球社区</h1>
+        <p class="muted auth-intro">连接同城球友、活动组局、装备交易和真实讨论，在一个站点完成完整的羽球日常。</p>
 
         <div class="auth-tabs" role="tablist" aria-label="登录注册切换">
           <button
@@ -217,14 +218,33 @@ export default {
   position: fixed;
   inset: 0;
   background:
+    radial-gradient(circle at 18% 20%, rgba(20, 184, 166, 0.28), transparent 28%),
     radial-gradient(circle at 78% 24%, rgba(14, 165, 233, 0.22), transparent 38%),
-    linear-gradient(140deg, rgba(2, 6, 23, 0.62), rgba(2, 6, 23, 0.34));
+    linear-gradient(140deg, rgba(2, 6, 23, 0.52), rgba(255, 255, 255, 0.08));
   z-index: 1;
 }
 
 .auth-content {
   position: relative;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.auth-kicker {
+  margin: 0 0 12px;
+  color: #0f766e;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.auth-intro {
+  margin: 0 0 4px;
+  max-width: 34ch;
+  color: #475569;
 }
 
 .auth-tabs {
@@ -236,36 +256,43 @@ export default {
 
 .auth-tab {
   margin-top: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.6);
+  color: #475569;
+  box-shadow: none;
 }
 
 .auth-tab.active {
-  background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+  background: linear-gradient(135deg, #14b8a6, #0891b2);
   border-color: transparent;
+  color: white;
 }
 
 .auth-panel {
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .google-wrap {
-  margin-top: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .google-manual-btn {
   margin-top: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #334155;
+  box-shadow: none;
 }
 
 .auth-toast {
-  margin: 14px 0 0;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.45);
-  color: #d1fae5;
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.24);
+  color: #0f766e;
   font-size: 13px;
 }
 
@@ -275,7 +302,7 @@ export default {
   }
 
   .auth-page {
-    background: linear-gradient(135deg, #0f172a, #0b2a36);
+    background: linear-gradient(135deg, #f6fafc, #e9f3f7);
   }
 }
 </style>

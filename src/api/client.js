@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { reportClientError } from '../utils/errorReporter';
 
 const isLocalHost = typeof window !== 'undefined' && (
   window.location.hostname === '127.0.0.1' ||
@@ -19,5 +20,27 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    reportClientError({
+      channel: 'axios',
+      message: error.message,
+      error: error.response
+        ? {
+            status: error.response.status,
+            url: error.config?.url,
+            method: error.config?.method,
+            responseMessage: error.response.data?.message || ''
+          }
+        : {
+            url: error.config?.url,
+            method: error.config?.method
+          }
+    });
+    return Promise.reject(error);
+  }
+);
 
 export default api;

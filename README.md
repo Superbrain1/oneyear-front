@@ -9,6 +9,14 @@ npm install
 npm run dev
 ```
 
+## Test
+
+```bash
+npm test
+```
+
+Current `npm test` runs a production webpack build as a frontend regression check.
+
 Then open http://127.0.0.1:5173
 
 Default API base URL in `main.js`:
