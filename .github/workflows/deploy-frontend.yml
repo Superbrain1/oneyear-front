@@ -108,7 +108,7 @@ jobs:
             set -e
             test -f "$FRONTEND_DEPLOY_PATH/index.html"
             find "$FRONTEND_DEPLOY_PATH" -type d -exec chmod 755 {} +
-            find "$FRONTEND_DEPLOY_PATH" -type f -exec chmod 644 {} +
+            find "$FRONTEND_DEPLOY_PATH" -type f ! -name '.user.ini' -exec chmod 644 {} +
             ls -lah "$FRONTEND_DEPLOY_PATH/index.html"
           EOF
 
